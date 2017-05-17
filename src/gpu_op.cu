@@ -58,10 +58,13 @@ __global__ void matrix_softmax_cross_entropy_kernel(int nrow, int ncol,
 // arr[:] = value
 
 int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
-  float *arr_data = (float *)arr->data;
+  float *arr_data;
+ // = (float *)arr->data;
   int size = 1;
-  //for (int i=0; i<arr.ndim; i++) size *= arr.shape[i];
-  //cudaMemset(arr_data, value, size*sizeof(int));
+  for (int i=0; i<arr.ndim; i++) 
+	  size *= arr.shape[i];
+  cudaMemset(arr_data, value, size*sizeof(float));
+  cudaMemcpy(arr->data, arr_data, size*sizeof(float), cudaMemcpyDeviceToHost);
   return 0;
 }
 
