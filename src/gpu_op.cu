@@ -67,7 +67,6 @@ int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
   {
 	  size *= arr->shape[i];
 	  printf("shape, %f ", arr->shape[i]);
-	  printf("xx, %f ", output_data[i]);
   }
   cudaMalloc(&arr_data, size*sizeof(float));
   cudaMemset(arr_data, value, size*sizeof(float));
