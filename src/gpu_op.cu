@@ -65,14 +65,14 @@ __global__ void array_set(const float input, float *output, int64_t n)
 	}
 }
 int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
-  println("value : %f ", value);
+  printf("value : %f ", value);
   float *output_data = (float *)arr->data;
   int64_t size = 1;
   for (int i=0; i<arr->ndim; i++) 
   {
 	  size *= arr->shape[i];
   }
-  println("value : %f ", size);
+  printf("value : %f ", size);
   array_set<<<1, size>>>(value, output_data, size);
   return 0;
 }
