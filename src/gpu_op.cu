@@ -63,16 +63,11 @@ int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
   int size = 1;
   for (int i=0; i<arr.ndim; i++) 
 	  size *= arr.shape[i];
+  cudaMalloc(&arr_data, size*sizeof(float));
   cudaMemset(arr_data, value, size*sizeof(float));
   cudaMemcpy(arr->data, arr_data, size*sizeof(float), cudaMemcpyDeviceToHost);
+  cudaFree(arr_data);
   return 0;
-}
-
-__global__ void value_copy_kernel(int nrow, int ncol, const float *input, float *output)
-{
-	if (threadIdx.x < nrow && threadIdx.y < ncol)
-		output[blockIdx.x*blockDim.x+threadIdx.x][threadIdx.y] = input[threadIdx.x][threadIdx.y];
-	  return 0;
 }
 
 // input, output
@@ -84,74 +79,74 @@ int DLGpuBroadcastTo(const DLArrayHandle input, DLArrayHandle output) {
   assert(input->shape[0] == output->shape[1] &&
          input->shape[1] == output->shape[2]);
 
-  int nrow = input->shape[0];
-  int ncol = input->shape[1];
-  int new_dimension = output->shape[0];
-  float *input_data = (float *)input->data;
-  float *output_data = (float *)output->data;
+  //int nrow = input->shape[0];
+  //int ncol = input->shape[1];
+  //int new_dimension = output->shape[0];
+  //float *input_data = (float *)input->data;
+  //float *output_data = (float *)output->data;
 
-  dim3 threads;
-  threads.x = nrow;
-  threads.y = ncol;
-  float* d_input;
-  int size = nrow*ncol;
-  cudaMalloc(&d_input, size);
-  cudaMemcpy(d_input, input_data, size, cudaMemcpyHostToDevice);
-  // every new_dimension there is a block;
-  // every block there is (x, y) threads
-  // every thread only copy one cell
-  value_copy_kernel<<<new_dimension, threads>>>(
-      nrow, ncol, d_input, output_data);
+  //dim3 threads;
+  //threads.x = nrow;
+  //threads.y = ncol;
+  //float* d_input;
+  //int size = nrow*ncol;
+  //cudaMalloc(&d_input, size);
+  //cudaMemcpy(d_input, input_data, size, cudaMemcpyHostToDevice);
+  //// every new_dimension there is a block;
+  //// every block there is (x, y) threads
+  //// every thread only copy one cell
+  //value_copy_kernel<<<new_dimension, threads>>>(
+  //    nrow, ncol, d_input, output_data);
 
   return 0;
 }
 
-__global__ void value_add_keneral(float *input, float *output)
-{
-  extern __shared__ float sum_per_dim = 0.0;
-  sum_per_dim += input[threadIdx.x][blockIdx.x][blockIdx.y]; 
-  __syncthreads();
-  output[blockIdx.x][blockIdx.y] = sum_per_dim
-}
+//__global__ void value_add_keneral(float *input, float *output)
+//{
+//  extern __shared__ float sum_per_dim = 0.0;
+//  sum_per_dim += input[threadIdx.x][blockIdx.x][blockIdx.y]; 
+//  __syncthreads();
+//  output[blockIdx.x][blockIdx.y] = sum_per_dim
+//}
 
 // output = input.sum(axis=0)
 
 int DLGpuReduceSumAxisZero(const DLArrayHandle input, DLArrayHandle output) {
   /* TODO: Your code here */
 
-  value_add_keneral<<<(input->shape[1], input->shape[2]), input->shape[0]>>>(input, output)
+  //value_add_keneral<<<(input->shape[1], input->shape[2]), input->shape[0]>>>(input, output)
 
   return 0;
 }
 
-__global__ void MatAdd(float A[N][N], float B[N][N], float C[N][N]) 
-{ 
-	int i = threadIdx.x; 
-	int j = threadIdx.y;
-       	C[i][j] = A[i][j] + B[i][j];
-}
+//__global__ void MatAdd(float A[N][N], float B[N][N], float C[N][N]) 
+//{ 
+//	int i = threadIdx.x; 
+//	int j = threadIdx.y;
+//       	C[i][j] = A[i][j] + B[i][j];
+//}
 
 
 // output = matA+matB
 int DLGpuMatrixElementwiseAdd(const DLArrayHandle matA,
                               const DLArrayHandle matB, DLArrayHandle output) {
   /* TODO: Your code here */
- dim3 thread(matA.shape[0], matA.shape[1]);
-  MatAdd<<<1, thread>>>(matA, matB, output);
+// dim3 thread(matA.shape[0], matA.shape[1]);
+//  MatAdd<<<1, thread>>>(matA, matB, output);
   return 0;
 }
-__global__ void elementAdd(float *input, float value, float *output) 
-{ 
-	int i = threadIdx.x; 
-	int j = threadIdx.y;
-       	output[i][j] = input[i][j] + value;
-
+//__global__ void elementAdd(float *input, float value, float *output) 
+//{ 
+//	int i = threadIdx.x; 
+//	int j = threadIdx.y;
+//       	output[i][j] = input[i][j] + value;
+//
 int DLGpuMatrixElementwiseAddByConst(const DLArrayHandle input, float val,
                                      DLArrayHandle output) 
 { /* TODO: Your code here */
-	dim3 thread(input->shape[0], input->shape[1])
-  elementAdd<<<1, thread>>>(matA, matB, output);
-  return 0;
+	//dim3 thread(input->shape[0], input->shape[1])
+	//	elementAdd<<<1, thread>>>(matA, matB, output);
+	return 0;
 }
 
 int DLGpuMatrixElementwiseMultiply(const DLArrayHandle matA,
