@@ -72,7 +72,7 @@ int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
   cudaMalloc(&arr_data, size*sizeof(float));
   cudaMemset(arr_data, value, size*sizeof(float));
   cudaMemcpy(output_data, arr_data, size*sizeof(float), cudaMemcpyDeviceToHost);
-  printf("output_data, %f ", output_data[i]);
+  printf("output_data, %f ", output_data[1]);
   cudaFree(arr_data);
   return 0;
 }
