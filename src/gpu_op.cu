@@ -4,6 +4,8 @@
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
 
+#define THREADS_PER_BLOCK 512
+
 /* TODO: Your code here */
 /* all your GPU kernel code, e.g. matrix_softmax_cross_entropy_kernel */
 
@@ -58,15 +60,15 @@ __global__ void matrix_softmax_cross_entropy_kernel(int nrow, int ncol,
 int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
   float *arr_data = (float *)arr->data;
   int size = 1;
-  for (int i=0; i<arr.ndim; i++) size *= arr.shape[i];
-  cudaMemset(arr_data, value, size*sizeof(int));
+  //for (int i=0; i<arr.ndim; i++) size *= arr.shape[i];
+  //cudaMemset(arr_data, value, size*sizeof(int));
   return 0;
 }
 
 __global__ void value_copy_kernel(int nrow, int ncol, const float *input, float *output)
 {
 	if (threadIdx.x < nrow && threadIdx.y < ncol)
-		output[blockIdx.x][threadIdx.x][threadIdx.y] = input[threadIdx.x][threadIdx.y]
+		output[blockIdx.x*blockDim.x+threadIdx.x][threadIdx.y] = input[threadIdx.x][threadIdx.y];
 	  return 0;
 }
 
