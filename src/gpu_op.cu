@@ -80,7 +80,7 @@ int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
 __global__ void array_broadcast(float *output, const float *input, int row, int col, int new_dimension){
 	int in_index = blockDim.x * blockIdx.x + threadIdx.x;
 	for (int i=0; i< new_dimension; i++){
-		int out_index = i*nrow*ncol+in_index;
+		int out_index = i*row*col+in_index;
 		output[out_index] = input[in_index];
 	}
 
