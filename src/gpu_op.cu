@@ -59,16 +59,13 @@ __global__ void matrix_softmax_cross_entropy_kernel(int nrow, int ncol,
 __global__ void array_set_kernel(float *data, float value, int64_t size) {
   int id = threadIdx.x;
   int stride = blockDim.x;
-  printf("id, %d \n", id);
   for (int i = id; i < size; i += stride) {
-	  printf("i: %d ", i);
     data[i] = value;
   }
-  printf("\n ");
 }
 // arr, value
 // arr[:] = value
-__global__ void array_set(float *output, const float input, int64_t n)
+__global__ void value_copy_kernel(float *output, const float input, int64_t n)
 {
 	int out_index = blockDim.x * blockIdx.x + threadIdx.x;
 	if (out_index < n) {
@@ -81,26 +78,9 @@ int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
   for (int i = 0; i < arr->ndim; i++) {
     size *= arr->shape[i];
   }
-  array_set_kernel<<<1, 1024>>>((float *)arr->data, value, size);
+  array_set_kernel<<<1, size>>>((float *)arr->data, value, size);
   return 0;
 }
-//int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
-//  printf("value : %f ", value);
-//
-//  int size = 1;
-//  for (int i=0; i<arr->ndim; i++) 
-//  {
-//	  size *= int(arr->shape[i]);
-//  }
-//  arr->data = (float*)malloc(size*sizeof(float));
-//  for (int i=0; i<=size; i++)
-//  {
-//	  arr->data[i] = value;
-//  }
-//  //printf("value : %d ", size);
-//  //array_set<<<1, size>>>(value, output_data, size);
-//  return 0;
-//}
 
 // input, output
 // output[:,] = input 
@@ -111,11 +91,11 @@ int DLGpuBroadcastTo(const DLArrayHandle input, DLArrayHandle output) {
   assert(input->shape[0] == output->shape[1] &&
          input->shape[1] == output->shape[2]);
 
-  //int nrow = input->shape[0];
-  //int ncol = input->shape[1];
-  //int new_dimension = output->shape[0];
-  //float *input_data = (float *)input->data;
-  //float *output_data = (float *)output->data;
+  int nrow = input->shape[0];
+  int ncol = input->shape[1];
+  int new_dimension = output->shape[0];
+  float *input_data = (float *)input->data;
+  float *output_data = (float *)output->data;
 
   //dim3 threads;
   //threads.x = nrow;
