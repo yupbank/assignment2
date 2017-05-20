@@ -71,7 +71,7 @@ int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
     size *= arr->shape[i];
   }
   
-  array_set<<<500, size>>>((float *)arr->data, value, size);
+  array_set<<<500, size/500>>>((float *)arr->data, value, size);
   return 0;
 }
 
