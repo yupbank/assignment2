@@ -59,10 +59,12 @@ __global__ void matrix_softmax_cross_entropy_kernel(int nrow, int ncol,
 __global__ void array_set_kernel(float *data, float value, int64_t size) {
   int id = threadIdx.x;
   int stride = blockDim.x;
-  printf("id, %d ", id);
+  printf("id, %d \n", id);
   for (int i = id; i < size; i += stride) {
+	  printf("i: %d ", i);
     data[i] = value;
   }
+  printf("\n ");
 }
 // arr, value
 // arr[:] = value
