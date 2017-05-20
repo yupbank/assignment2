@@ -72,10 +72,10 @@ int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
   {
 	  size *= int(arr->shape[i]);
   }
-  float *output_data = arr->data = (float*)malloc(size*sizeof(float));
+  arr->data = (float*)malloc(size*sizeof(float));
   for (int i=0; i<=size; i++)
   {
-	  output_data[i] = value;
+	  arr->data[i] = value;
   }
   //printf("value : %d ", size);
   //array_set<<<1, size>>>(value, output_data, size);
