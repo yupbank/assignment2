@@ -78,7 +78,7 @@ int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
   for (int i = 0; i < arr->ndim; i++) {
     size *= arr->shape[i];
   }
-  array_set<<<20, 1024>>>((float *)arr->data, value, size);
+  array_set_kernel<<<20, 1024>>>((float *)arr->data, value, size);
   return 0;
 }
 //int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
