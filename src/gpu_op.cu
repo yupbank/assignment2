@@ -60,6 +60,7 @@ __global__ void array_set_kernel(float *data, float value, int64_t size) {
   int id = threadIdx.x;
   int stride = blockDim.x;
   for (int i = id; i < size; i += stride) {
+	  printf("stride, %d", stride);
     data[i] = value;
   }
 }
