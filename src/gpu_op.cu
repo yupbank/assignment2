@@ -100,31 +100,28 @@ int DLGpuBroadcastTo(const DLArrayHandle input, DLArrayHandle output) {
   float *output_data = (float *)output->data;
 
   array_broadcast<<<nrow, ncol>>>(output_data, input_data, nrow, ncol, new_dimension);
-  //cudaMalloc(&d_input, size);
-  //cudaMemcpy(d_input, input_data, size, cudaMemcpyHostToDevice);
-  //// every new_dimension there is a block;
-  //// every block there is (x, y) threads
-  //// every thread only copy one cell
-  //value_copy_kernel<<<new_dimension, threads>>>(
-  //    nrow, ncol, d_input, output_data);
 
   return 0;
 }
 
-//__global__ void value_add_keneral(float *input, float *output)
-//{
-//  extern __shared__ float sum_per_dim = 0.0;
-//  sum_per_dim += input[threadIdx.x][blockIdx.x][blockIdx.y]; 
-//  __syncthreads();
-//  output[blockIdx.x][blockIdx.y] = sum_per_dim
-//}
+__global__ void value_add_keneral(float *input, float *output)
+{
+  extern __shared__ float sum_per_dim = 0.0;
+  int i = blockDim.x * blockIdx.x + threadIdx.x;
+  int j = blockDim.y * blockIdx.y + threadIdx.y;
+  sum_per_dim += input[threadIdx.x+i+j]; 
+  __syncthreads();
+  output[i+j] = sum_per_dim
+}
 
 // output = input.sum(axis=0)
 
 int DLGpuReduceSumAxisZero(const DLArrayHandle input, DLArrayHandle output) {
   /* TODO: Your code here */
-
-  //value_add_keneral<<<(input->shape[1], input->shape[2]), input->shape[0]>>>(input, output)
+  dim3 block;
+  block.x = input->shape[1]
+  block.y = input->shape[2]
+  value_add_keneral<<<block, input->shape[0]>>>((float *)input->data, (float *)output->data)
 
   return 0;
 }
