@@ -77,11 +77,12 @@ int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
 
 // input, output
 // output[:,] = input 
-__global__ void array_broadcast(float *output, const float *input, int row, int col){
-	int i = threadIdx.x; 
-	int j = threadIdx.y;
-	int the = blockIdx.x * col * row;
-	output[the+i*col+j] = input[i*col+j];
+__global__ void array_broadcast(float *output, const float *input, int row, int col, int new_dimension){
+	int in_index = blockDim.x * blockIdx.x + threadIdx.x;
+	for (int i=0; i< new_dimension; i++){
+		int out_index = i*nrow*ncol+in_index;
+		output[out_index] = input[in_index];
+	}
 
 }
 
@@ -98,11 +99,7 @@ int DLGpuBroadcastTo(const DLArrayHandle input, DLArrayHandle output) {
   float *input_data = (float *)input->data;
   float *output_data = (float *)output->data;
 
-  dim3 threads;
-  threads.x = nrow;
-  threads.y = ncol;
-
-  array_broadcast<<<new_dimension, threads>>>(output_data, input_data, nrow, ncol);
+  array_broadcast<<<nrow, ncol>>>(output_data, input_data, nrow, ncol, new_dimension);
   //cudaMalloc(&d_input, size);
   //cudaMemcpy(d_input, input_data, size, cudaMemcpyHostToDevice);
   //// every new_dimension there is a block;
