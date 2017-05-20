@@ -65,7 +65,7 @@ __global__ void array_set_kernel(float *data, float value, int64_t size) {
 }
 // arr, value
 // arr[:] = value
-__global__ void value_copy_kernel(float *output, const float input, int64_t n)
+__global__ void array_set(float *output, const float input, int64_t n)
 {
 	int out_index = blockDim.x * blockIdx.x + threadIdx.x;
 	if (out_index < n) {
@@ -78,7 +78,8 @@ int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
   for (int i = 0; i < arr->ndim; i++) {
     size *= arr->shape[i];
   }
-  array_set_kernel<<<1, size>>>((float *)arr->data, value, size);
+  
+  array_set<<<500, 200>>>((float *)arr->data, value, size);
   return 0;
 }
 
