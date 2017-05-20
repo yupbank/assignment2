@@ -63,15 +63,6 @@ __global__ void array_set_kernel(float *data, float value, int64_t size) {
     data[i] = value;
   }
 }
-
-int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
-  int64_t size = 1;
-  for (int i = 0; i < arr->ndim; i++) {
-    size *= arr->shape[i];
-  }
-  array_set<<<1, 1024>>>(value, (float *)arr->data, size);
-  return 0;
-}
 // arr, value
 // arr[:] = value
 __global__ void array_set(const float input, float *output, int64_t n)
@@ -80,6 +71,15 @@ __global__ void array_set(const float input, float *output, int64_t n)
 	if (out_index < n) {
 		output[out_index] = input;
 	}
+}
+
+int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
+  int64_t size = 1;
+  for (int i = 0; i < arr->ndim; i++) {
+    size *= arr->shape[i];
+  }
+  array_set<<<1, 1024>>>(value, (float *)arr->data, size);
+  return 0;
 }
 //int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
 //  printf("value : %f ", value);
