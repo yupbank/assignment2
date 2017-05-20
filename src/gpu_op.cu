@@ -55,32 +55,49 @@ __global__ void matrix_softmax_cross_entropy_kernel(int nrow, int ncol,
   }
 }
 
-// arr, value
-// arr[:] = value
-__global__ void array_set(const float input, float *output, int64_t n)
-{
-	int out_index = blockDim.x * blockIdx.x + threadIdx.x;
-	if (out_index < n) {
-		output[out_index] = input;
-	}
-}
-int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
-  printf("value : %f ", value);
 
-  int size = 1;
-  for (int i=0; i<arr->ndim; i++) 
-  {
-	  size *= int(arr->shape[i]);
+__global__ void array_set_kernel(float *data, float value, int64_t size) {
+  int id = threadIdx.x;
+  int stride = blockDim.x;
+  for (int i = id; i < size; i += stride) {
+    data[i] = value;
   }
-  arr->data = (float*)malloc(size*sizeof(float));
-  for (int i=0; i<=size; i++)
-  {
-	  arr->data[i] = value;
+}
+
+int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
+  int64_t size = 1;
+  for (int i = 0; i < arr->ndim; i++) {
+    size *= arr->shape[i];
   }
-  //printf("value : %d ", size);
-  //array_set<<<1, size>>>(value, output_data, size);
+  array_set_kernel<<<1, 1024>>>((float *)arr->data, value, size);
   return 0;
 }
+// arr, value
+// arr[:] = value
+//__global__ void array_set(const float input, float *output, int64_t n)
+//{
+//	int out_index = blockDim.x * blockIdx.x + threadIdx.x;
+//	if (out_index < n) {
+//		output[out_index] = input;
+//	}
+//}
+//int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
+//  printf("value : %f ", value);
+//
+//  int size = 1;
+//  for (int i=0; i<arr->ndim; i++) 
+//  {
+//	  size *= int(arr->shape[i]);
+//  }
+//  arr->data = (float*)malloc(size*sizeof(float));
+//  for (int i=0; i<=size; i++)
+//  {
+//	  arr->data[i] = value;
+//  }
+//  //printf("value : %d ", size);
+//  //array_set<<<1, size>>>(value, output_data, size);
+//  return 0;
+//}
 
 // input, output
 // output[:,] = input 
