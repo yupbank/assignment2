@@ -1,5 +1,5 @@
 from dlsys import autodiff as ad
-from dlsys import ndarray, gpu_op
+#from dlsys import ndarray#, gpu_op
 import numpy as np
 
 import argparse
@@ -103,7 +103,8 @@ def mnist_logreg(executor_ctx=None, num_epochs=10, print_loss_val_each_epoch=Fal
     y_val = np.empty(shape=(batch_size, 10), dtype=np.float32)
     valid_X_val = np.empty(shape=(batch_size, 784), dtype=np.float32)
     valid_y_val = np.empty(shape=(batch_size, 10), dtype=np.float32)
-    if ndarray.is_gpu_ctx(executor_ctx):
+
+    if executor_ctx and ndarray.is_gpu_ctx(executor_ctx):
         W1_val = ndarray.array(W1_val, ctx=executor_ctx)
         b1_val = ndarray.array(b1_val, ctx=executor_ctx)
         X_val = ndarray.array(X_val, ctx=executor_ctx)
@@ -118,6 +119,7 @@ def mnist_logreg(executor_ctx=None, num_epochs=10, print_loss_val_each_epoch=Fal
             X_val[:] = train_set_x[minibatch_start:minibatch_end]
             y_val[:] = convert_to_one_hot(
                 train_set_y[minibatch_start:minibatch_end])
+            import ipdb; ipdb.set_trace()
             loss_val, grad_W1_val, grad_b1_val, _ = executor.run(
                 feed_dict = {X: X_val, y_: y_val, W1: W1_val, b1: b1_val})
             # SGD update

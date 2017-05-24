@@ -2,8 +2,12 @@
 from __future__ import absolute_import
 
 import numpy as np
-from . import ndarray, gpu_op
+try:
+    from . import ndarray, gpu_op
+except Exception, e:
+    pass
 
+safe_len = lambda r: len(r) if hasattr(r, '__iter__') else 1
 
 class Node(object):
     """Node in a computation graph."""
@@ -155,10 +159,13 @@ class AddOp(Op):
         """TODO: Your code here"""
         assert len(input_shapes) == 2
         a, b = input_shapes
-        if len(a) > len(b):
+        if a == b:
             return a
-        else:
+        if a == (1,):
             return b
+        if b == (1,):
+            return a
+        import ipdb; ipdb.set_trace()
 
 class AddByConstOp(Op):
     def __call__(self, node_A, const_val):
@@ -181,12 +188,8 @@ class AddByConstOp(Op):
 
     def infer_shape(self, node, input_shapes):
         """TODO: Your code here"""
-        assert len(input_shapes) == 2
-        a, b = input_shapes
-        if len(a) > len(b):
-            return a
-        else:
-            return b
+        assert len(input_shapes) == 1
+        return input_shapes[0]
         
 
 
@@ -199,6 +202,7 @@ class MulOp(Op):
 
     def compute(self, node, input_vals, output_val, use_numpy=True):
         assert len(input_vals) == 2
+        print self, node
         if use_numpy:
             output_val[:] = input_vals[0] * input_vals[1]
         else:
@@ -223,15 +227,13 @@ class MulOp(Op):
         """TODO: Your code here"""
         assert len(input_shapes) == 2
         a, b = input_shapes
-        if a==b:
+        if a == b:
             return a
-        elif len(a) > len(b):
-            return a
-        elif len(b) > len(a):
+        if a == (1,):
             return b
-        elif a[1] == b[0]:
-            return (a[0], b[1])
-        
+        if b == (1,):
+            return a
+
 
 class MulByConstOp(Op):
     def __call__(self, node_A, const_val):
@@ -254,12 +256,8 @@ class MulByConstOp(Op):
 
     def infer_shape(self, node, input_shapes):
         """TODO: Your code here"""
-        assert len(input_shapes) == 2
-        a, b = input_shapes
-        if len(a) > len(b):
-            return a
-        else:
-            return b
+        assert len(input_shapes) == 1
+        return input_shapes[0]
         
 
 class MatMulOp(Op):
@@ -330,12 +328,18 @@ class MatMulOp(Op):
         """TODO: Your code here"""
         assert len(input_shapes) == 2
         a, b = input_shapes
-        if a == b:
-            return a
-        if a[0]  == b[1]:
-            return b[0], a[1]
-        if a[1] == b[0]:
+        if ((node.matmul_attr_trans_A is False) and
+                (node.matmul_attr_trans_B is False)):
             return a[0], b[1]
+        elif ((node.matmul_attr_trans_A is True) and
+                (node.matmul_attr_trans_B is False)):
+            return a[1], b[1]
+        elif ((node.matmul_attr_trans_A is False) and
+                (node.matmul_attr_trans_B is True)):
+            return a[0], b[0]
+        elif ((node.matmul_attr_trans_A is True) and
+                (node.matmul_attr_trans_B is True)):
+            return a[1], b[1]
         
 
 class PlaceholderOp(Op):
@@ -375,7 +379,11 @@ class ZerosLikeOp(Op):
     def infer_shape(self, node, input_shapes):
         """If input_shape is a vector, simpler to return (1,)"""
         """TODO: Your code here"""
-        return input_shapes[0]
+        a = input_shapes[0]
+        if safe_len(a) > 1:
+            return a
+        else:
+            return 1,
 
 class OnesLikeOp(Op):
     def __call__(self, node_A):
@@ -398,7 +406,8 @@ class OnesLikeOp(Op):
     def infer_shape(self, node, input_shapes):
         """If input_shape is a vector, simpler to return (1,)"""
         """TODO: Your code here"""
-        return input_shapes[0]
+        a = input_shapes[0]
+        return a
 
 class ReduceSumAxisZeroOp(Op):
     def __call__(self, node_A):
@@ -427,7 +436,11 @@ class ReduceSumAxisZeroOp(Op):
         for vector, simpler to do (3,)->(1,)
         """
         """TODO: Your code here"""
-        return input_shapes[0][1:]
+        a = input_shapes[0]
+        if safe_len(a) > 1:
+            return a[1:]
+        else:
+            return 1,
 
 class BroadcastToOp(Op):
     def __call__(self, node_A, node_B):
@@ -612,7 +625,7 @@ class Executor(object):
         for node in self.topo_order:
             if node in self.node_to_shape_map:
                 continue
-            input_shapes = [self.node_to_shape_map[n] for i in node.inputs]
+            input_shapes = [self.node_to_shape_map[i] for i in node.inputs]
             shape = node.op.infer_shape(node, input_shapes)
             self.node_to_shape_map[node] = shape
 
