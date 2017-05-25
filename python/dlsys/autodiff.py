@@ -9,6 +9,14 @@ except Exception, e:
 
 safe_len = lambda r: len(r) if hasattr(r, '__iter__') else 1
 
+def info(f):
+    def _(self, *args, **kwagrs):
+        # print self.__class__.__name__, 'input',  args
+        res = f(self, *args, **kwagrs)
+        # print self.__class__.__name__, 'output',  res
+        return res
+    return _
+
 class Node(object):
     """Node in a computation graph."""
     def __init__(self):
@@ -153,20 +161,17 @@ class AddOp(Op):
 
     def gradient(self, node, output_grad):
         return [output_grad, output_grad]
-
+    
+    @info
     def infer_shape(self, node, input_shapes):
         """Need to handle input_vals[0].shape != input_vals[1].shape"""
         """TODO: Your code here"""
         assert len(input_shapes) == 2
         a, b = input_shapes
-        if a == b:
+        if safe_len(a) >= safe_len(b):
             return a
-        if a == (1,):
+        else:
             return b
-        if b == (1,):
-            return a
-        import ipdb; ipdb.set_trace()
-
 class AddByConstOp(Op):
     def __call__(self, node_A, const_val):
         new_node = Op.__call__(self)
@@ -186,6 +191,7 @@ class AddByConstOp(Op):
     def gradient(self, node, output_grad):
         return [output_grad]
 
+    @info
     def infer_shape(self, node, input_shapes):
         """TODO: Your code here"""
         assert len(input_shapes) == 1
@@ -202,7 +208,6 @@ class MulOp(Op):
 
     def compute(self, node, input_vals, output_val, use_numpy=True):
         assert len(input_vals) == 2
-        print self, node
         if use_numpy:
             output_val[:] = input_vals[0] * input_vals[1]
         else:
@@ -222,6 +227,7 @@ class MulOp(Op):
     def gradient(self, node, output_grad):
         return [node.inputs[1] * output_grad, node.inputs[0] * output_grad]
 
+    @info
     def infer_shape(self, node, input_shapes):
         """Need to handle input_vals[0].shape != input_vals[1].shape"""
         """TODO: Your code here"""
@@ -229,9 +235,9 @@ class MulOp(Op):
         a, b = input_shapes
         if a == b:
             return a
-        if a == (1,):
+        if safe_len(a) == 1:
             return b
-        if b == (1,):
+        if safe_len(b) == 1:
             return a
 
 
@@ -254,6 +260,7 @@ class MulByConstOp(Op):
     def gradient(self, node, output_grad):
         return [node.const_attr * output_grad]
 
+    @info
     def infer_shape(self, node, input_shapes):
         """TODO: Your code here"""
         assert len(input_shapes) == 1
@@ -324,6 +331,7 @@ class MatMulOp(Op):
                 output_grad, node.inputs[0], trans_A=True, trans_B=False)
         return [lhs_grad, rhs_grad]
 
+    @info
     def infer_shape(self, node, input_shapes):
         """TODO: Your code here"""
         assert len(input_shapes) == 2
@@ -354,6 +362,7 @@ class PlaceholderOp(Op):
     def gradient(self, node, output_grad):
         return None
 
+    @info
     def infer_shape(self, node, input_shapes):
         assert False, "placeholder %s shape provided by feed_shape" % node.name
 
@@ -376,6 +385,7 @@ class ZerosLikeOp(Op):
     def gradient(self, node, output_grad):
         return [zeroslike_op(node.inputs[0])]
 
+    @info
     def infer_shape(self, node, input_shapes):
         """If input_shape is a vector, simpler to return (1,)"""
         """TODO: Your code here"""
@@ -383,7 +393,7 @@ class ZerosLikeOp(Op):
         if safe_len(a) > 1:
             return a
         else:
-            return 1,
+            return a,
 
 class OnesLikeOp(Op):
     def __call__(self, node_A):
@@ -403,6 +413,7 @@ class OnesLikeOp(Op):
     def gradient(self, node, output_grad):
         return [zeroslike_op(node.inputs[0])]
 
+    @info
     def infer_shape(self, node, input_shapes):
         """If input_shape is a vector, simpler to return (1,)"""
         """TODO: Your code here"""
@@ -430,6 +441,7 @@ class ReduceSumAxisZeroOp(Op):
     def gradient(self, node, output_grad):
         return [broadcastto_op(output_grad, node.inputs[0])]
 
+    @info
     def infer_shape(self, node, input_shapes):
         """summation reduction axis = 0
         e.g. (3,4,5)->(4,5)
@@ -464,6 +476,7 @@ class BroadcastToOp(Op):
         grad_B = zeroslike_op(node.inputs[1])
         return [grad_A, grad_B]
 
+    @info
     def infer_shape(self, node, input_shapes):
         """TODO: Your code here"""
         return  input_shapes[1]
@@ -500,9 +513,10 @@ class SoftmaxCrossEntropyOp(Op):
         grad_B = zeroslike_op(node.inputs[1])
         return [grad_A, grad_B]
 
+    @info
     def infer_shape(self, node, input_shapes):
         """TODO: Your code here"""
-        return input_shapes[0][0]
+        return input_shapes[0][1],
 
 class SoftmaxOp(Op):
     def __call__(self, node_A):
@@ -523,6 +537,7 @@ class SoftmaxOp(Op):
         # Not allowing taking 2nd derivative of SoftmaxCrossEntropyOp.
         raise NotImplementedError
 
+    @info
     def infer_shape(self, node, input_shapes):
         """TODO: Your code here"""
         return input_shapes[0]
@@ -544,6 +559,7 @@ class ReluOp(Op):
     def gradient(self, node, output_grad):
         return [relu_gradient_op(node.inputs[0], output_grad)]
 
+    @info
     def infer_shape(self, node, input_shapes):
         """TODO: Your code here"""
         return input_shapes[0]
@@ -567,6 +583,7 @@ class ReluGradientOp(Op):
     def gradient(self, node, output_grad):
         raise NotImplementedError
 
+    @info
     def infer_shape(self, node, input_shapes):
         """TODO: Your code here"""
         return input_shapes[0]
@@ -608,6 +625,7 @@ class Executor(object):
         self.node_to_arr_map = None
         self.feed_shapes = None
 
+    @info
     def infer_shape(self, feed_shapes):
         """Given shapes of feed_dict nodes, infer shape for all nodes in graph.
 
@@ -621,13 +639,13 @@ class Executor(object):
         feed_shapes: node->shapes mapping for feed_dict nodes.
         """
         """TODO: Your code here"""
-        self.node_to_shape_map = feed_shapes
         for node in self.topo_order:
-            if node in self.node_to_shape_map:
+            if node in feed_shapes:
                 continue
-            input_shapes = [self.node_to_shape_map[i] for i in node.inputs]
+            input_shapes = [feed_shapes[i] for i in node.inputs]
             shape = node.op.infer_shape(node, input_shapes)
-            self.node_to_shape_map[node] = shape
+            feed_shapes[node] = shape
+        self.node_to_shape_map = feed_shapes
 
     def memory_plan(self, feed_shapes):
         """Allocates ndarray.NDArray for every node except feed_dict nodes.
