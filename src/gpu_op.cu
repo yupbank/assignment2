@@ -106,35 +106,33 @@ int DLGpuBroadcastTo(const DLArrayHandle input, DLArrayHandle output) {
 
 __global__ void value_add_keneral(float *input, float *output, int64_t size, int64_t rows)
 {
-int stride = blockDim.x;
-int id = threadIdx.x;
-for(int i= id; i<size, i+=stride)
-{
-	float v = 0.0;
-	for (int j=0; j<rows; j++)
-	{
-		v += input[j*size+i];
+	int stride = blockDim.x;
+	int id = threadIdx.x;
+	for(int i= id; i<size; i+=stride){
+		float v = 0.0;
+		for (int j=0; j<rows; j++)
+		{
+			v += input[j*size+i];
+		}
+		output[i]=v;
 	}
-	output[i]=v;
-}
 }
 
 // output = input.sum(axis=0)
 
 int DLGpuReduceSumAxisZero(const DLArrayHandle input, DLArrayHandle output) {
   /* TODO: Your code here */
-  int64_t size =input->shape[1] *  input->shape[2]
-  value_add_keneral<<<1, 1024>>>((float *)input->data, (float *)output->data, size, output->shape[0])
+  int64_t size =input->shape[1] *  input->shape[2];
+  value_add_keneral<<<1, 1024>>>((float *)input->data, (float *)output->data, size, output->shape[0]);
 
   return 0;
 }
 
-__global__ void MatAdd(float * A, float *B, float *C, int64_t size) 
+__global__ void matAdd(float * A, float *B, float *C, int64_t size) 
 { 
 	int begin = threadIdx.x; 
 	int stride = blockDim.x;
-	for (int i=begin; i<size; i+=stride)
-	{
+	for (int i=begin; i<size; i+=stride){
 		C[i] = A[i]+B[i];
 	}
 }
@@ -149,7 +147,7 @@ int DLGpuMatrixElementwiseAdd(const DLArrayHandle matA,
   for (int i = 0; i < matA->ndim; i++) {
     size *= matA->shape[i];
   }
-  MatAdd<<<1, 1024>>>((float *)matA->data, (float *)matB->data, (float *)output->data, int64_t size);
+  matAdd<<<1, 1024>>>((float *) matA->data, (float *) matB->data, (float *) output->data, size);
   return 0;
 }
 __global__ void elementAdd(float *input, float value, float *output, int64_t size) 
@@ -157,7 +155,7 @@ __global__ void elementAdd(float *input, float value, float *output, int64_t siz
 	int i = threadIdx.x; 
 	int stride = blockDim.x;
 	for (int b=i; b<size; b+= stride){
-		output[b] = input[b]+value
+		output[b] = input[b]+value;
 	}
 }
 int DLGpuMatrixElementwiseAddByConst(const DLArrayHandle input, float val,
@@ -189,9 +187,7 @@ int DLGpuMatrixElementwiseMultiply(const DLArrayHandle matA,
   for (int i = 0; i < matA->ndim; i++) {
     size *= matA->shape[i];
   }
-  MatMultiply<<<1, 1024>>>((float *)matA->data, (float *)matB->data, (float *)output->data, int64_t size);
-  return 0;
-
+  MatMultiply<<<1, 1024>>>((float *)matA->data, (float *)matB->data, (float *)output->data, size);
   return 0;
 }
 
@@ -200,7 +196,7 @@ __global__ void elementMultiply(float *input, float value, float *output, int64_
 	int i = threadIdx.x; 
 	int stride = blockDim.x;
 	for (int b=i; b<size; b+= stride){
-		output[b] = input[b]*value
+		output[b] = input[b]*value;
 	}
 }
 int DLGpuMatrixMultiplyByConst(const DLArrayHandle input, float val,
@@ -231,8 +227,8 @@ int DLGpuMatrixMultiply(const DLArrayHandle matA, bool transposeA,
   cublasHandle_t handle;
   cublasCreate(&handle);
   if (transposeA)
-	  lda = m;
 	{
+	  lda = m;
 		if (transposeB) {
 			ldb = k;
 			ldc = k;
@@ -250,7 +246,7 @@ int DLGpuMatrixMultiply(const DLArrayHandle matA, bool transposeA,
 		if (transposeB) {
 			ldb = k;
 			ldc = k;
-			  cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, m, n, k, &alpha, (float *) matA->data, lda, (float *) matB->data, ldb, &beta, (float *) matC->data, ldc); 
+			cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, m, n, k, &alpha, (float *) matA->data, lda, (float *) matB->data, ldb, &beta, (float *) matC->data, ldc); 
 		}
 		else {
 			ldb = k;
@@ -265,7 +261,7 @@ __global__ void relu(float *input, float *output, int64_t size) {
 	int i = threadIdx.x; 
 	int stride = blockDim.x;
 	for (int b=i; b<size; b+= stride){
-		output[b] = max(input[b], 0.0f)
+		output[b] = max(input[b], 0.0f);
 	}
 	
 }
@@ -279,14 +275,13 @@ int DLGpuRelu(const DLArrayHandle input, DLArrayHandle output) {
   }
 	relu<<<1, 1024>>>((float *)input->data, (float *)output->data, size);
 	return 0;
-  return 0;
 }
 
 __global__ void relu_gradient(float *input, float *in_grad, float *output, int64_t size){
 	int i = threadIdx.x; 
 	int stride = blockDim.x;
 	for (int b=i; b<size; b+= stride){
-		output[b] = input[b] > 0 ? in_grad[b]: 0.0
+		output[b] = input[b] > 0 ? in_grad[b]: 0.0;
 	}
 
 }
@@ -310,10 +305,10 @@ __global__ void softmax(float *input, float *output, int nrow, int ncol) {
 	float sum = 0;
 	for (int m=0; m<ncol; m++)
 	{
-		sum += exp(intput[b*ncol+m])
+		sum += exp(input[b*ncol+m]);
 	}	
 	for (int m=0; m<ncol; m++) {
-		output[b*ncol+m] = exp(intput[b*ncol+m])/sum
+		output[b*ncol+m] = exp(input[b*ncol+m])/sum;
 	}
 	}
 
