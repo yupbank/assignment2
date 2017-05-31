@@ -77,10 +77,10 @@ int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
 
 // input, output
 // output[:,] = input 
-__global__ void array_broadcast(float *output, const float *input, int row, int col, int new_dimension){
+__global__ void array_broadcast(float *output, const float *input, int64_t size, int new_dimension){
 	int in_index = blockDim.x * blockIdx.x + threadIdx.x;
 	for (int i=0; i< new_dimension; i++){
-		int out_index = i*row*col+in_index;
+		int out_index = i*size+in_index;
 		output[out_index] = input[in_index];
 	}
 
@@ -88,18 +88,16 @@ __global__ void array_broadcast(float *output, const float *input, int row, int 
 
 int DLGpuBroadcastTo(const DLArrayHandle input, DLArrayHandle output) {
   /* TODO: Your code here */
-  assert(input->ndim == 2);
-  assert(output->ndim == 3);
-  assert(input->shape[0] == output->shape[1] &&
-         input->shape[1] == output->shape[2]);
+  int64_t size = 1;
+  for (int i = 0; i < input->ndim; i++) {
+    size *= input->shape[i];
+  }
 
-  int nrow = input->shape[0];
-  int ncol = input->shape[1];
   int new_dimension = output->shape[0];
   float *input_data = (float *)input->data;
   float *output_data = (float *)output->data;
 
-  array_broadcast<<<nrow, ncol>>>(output_data, input_data, nrow, ncol, new_dimension);
+  array_broadcast<<<nrow, ncol>>>(output_data, input_data, size, new_dimension);
 
   return 0;
 }
