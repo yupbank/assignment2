@@ -97,7 +97,7 @@ int DLGpuBroadcastTo(const DLArrayHandle input, DLArrayHandle output) {
   float *input_data = (float *)input->data;
   float *output_data = (float *)output->data;
 
-  array_broadcast<<<nrow, ncol>>>(output_data, input_data, size, new_dimension);
+  array_broadcast<<<1, 1024>>>(output_data, input_data, size, new_dimension);
 
   return 0;
 }
