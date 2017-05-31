@@ -218,12 +218,6 @@ int DLGpuMatrixMultiply(const DLArrayHandle matA, bool transposeA,
   /* TODO: Your code here */
   // Hint: use cublas
   // cublas assume matrix is column major
-	int m = matA->shape[0];
-	int n = matA->shape[1];
-	int k = matB->shape[1];
-	int lda = 0, ldb=0, ldc=0;
-	float alpha = 1;
-	float beta = 0;
   cublasHandle_t handle;
   cublasCreate(&handle);
 	cublasOperation_t trans_a = CUBLAS_OP_N, trans_b = CUBLAS_OP_N;
