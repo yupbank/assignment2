@@ -666,10 +666,11 @@ class Executor(object):
         feed_shapes: node->shapes mapping for feed_dict nodes.
         """
         """TODO: Your code here"""
-        node_to_arr_map = {}
-        for node, shape in feed_shapes.iteritems():
-            node_to_arr_map[node] = ndarray.empty(shape, ctx=self.ctx)
-        self.node_to_arr_map = node_to_arr_map
+        self.node_to_arr_map = {}
+        for node in self.topo_order:
+            if node not in feed_shapes:
+                self.node_to_arr_map[node] = ndarray.empty(self.node_to_shape_map[node], ctx=self.ctx)
+        return
 
     def run(self, feed_dict, convert_to_numpy_ret_vals=False):
         """
