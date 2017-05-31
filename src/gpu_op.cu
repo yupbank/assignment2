@@ -317,11 +317,9 @@ __global__ void softmax(float *input, float *output, int nrow, int ncol) {
 // e^x[0]/sum(e^x[i])
 int DLGpuSoftmax(const DLArrayHandle input, DLArrayHandle output) {
   /* TODO: Your code here */
-  int64_t size = 1;
-  for (int i = 0; i < input->ndim; i++) {
-    size *= input->shape[i];
-  }
-
+  int64_t nrow = input->shape[0];
+  int64_t ncol = input->shape[1];
+   softmax<<<1, 1024>>>((float *) input->data, (float *) output->data, nrow, ncol);
   return 0;
 }
 
