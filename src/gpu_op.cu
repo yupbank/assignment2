@@ -78,11 +78,11 @@ int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
 // input, output
 // output[:,] = input 
 __global__ void array_broadcast(float *output, const float *input, int64_t size, int new_dimension){
-	int in_index = blockDim.x * blockIdx.x + threadIdx.x;
-	for (int i=0; i< new_dimension; i++){
-		int out_index = i*size+in_index;
-		output[out_index] = input[in_index];
-	}
+	  int id = threadIdx.x;
+	    int stride = blockDim.x;
+  for (int i = id; i < new_dimension; i += stride) {
+    memcpy(output + i * size, input, sizeof(float) * size);
+}
 
 }
 
