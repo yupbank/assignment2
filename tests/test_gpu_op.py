@@ -42,7 +42,8 @@ def test_reduce_sum_axis_zero():
         v = y[index]
         v_ = y_[index]
         if abs((v - v_) / v_) > 1e-4:
-            print(index, v, v_)
+            # print(index, v, v_)
+            pass
     np.testing.assert_allclose(np.sum(x, axis=0), y, rtol=1e-5)
 
 
