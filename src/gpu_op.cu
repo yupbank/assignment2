@@ -123,7 +123,7 @@ __global__ void value_add_keneral(float *input, float *output, int64_t size, int
 int DLGpuReduceSumAxisZero(const DLArrayHandle input, DLArrayHandle output) {
   /* TODO: Your code here */
   int64_t size =input->shape[1] *  input->shape[2];
-  value_add_keneral<<<1, 1024>>>((float *)input->data, (float *)output->data, size, output->shape[0]);
+  value_add_keneral<<<1, 1024>>>((float *)input->data, (float *)output->data, size, input->shape[0]);
 
   return 0;
 }
