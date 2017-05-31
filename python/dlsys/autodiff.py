@@ -666,9 +666,10 @@ class Executor(object):
         feed_shapes: node->shapes mapping for feed_dict nodes.
         """
         """TODO: Your code here"""
-        self.infer_shape(feed_shapes)
+        node_to_arr_map = {}
         for node, shape in feed_shapes.iteritems():
-            self.node_to_val_map[node] = ndarray(shape, ctx=self.ctx)
+            node_to_val_map[node] = ndarray(shape, ctx=self.ctx)
+        self.node_to_arr_map = node_to_arr_map
 
     def run(self, feed_dict, convert_to_numpy_ret_vals=False):
         """
