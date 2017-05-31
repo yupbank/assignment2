@@ -226,35 +226,23 @@ int DLGpuMatrixMultiply(const DLArrayHandle matA, bool transposeA,
 	float beta = 0;
   cublasHandle_t handle;
   cublasCreate(&handle);
-  if (transposeA)
-	{
-	  lda = m;
-		if (transposeB) {
-			ldb = k;
-			ldc = k;
-			  cublasSgemm(handle, CUBLAS_OP_T, CUBLAS_OP_T, m, n, k, &alpha, (float *) matA->data, lda, (float *) matB->data, ldb, &beta, (float *) matC->data, ldc); 
-		
-		}
-		else {
-			ldb = k;
-			ldc = k;
-			  cublasSgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N, m, n, k, &alpha, (float *) matA->data, lda, (float *) matB->data, ldb, &beta, (float *) matC->data, ldc); 
-		}
-	}
-	else {
-	  lda = m;
-		if (transposeB) {
-			ldb = k;
-			ldc = k;
-			cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, m, n, k, &alpha, (float *) matA->data, lda, (float *) matB->data, ldb, &beta, (float *) matC->data, ldc); 
-		}
-		else {
-			ldb = k;
-			ldc = k;
-			  cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, &alpha, (float *) matA->data, lda, (float *) matB->data, ldb, &beta, (float *) matC->data, ldc); 
-		}
-	
-	}
+	cublasOperation_t trans_a = CUBLAS_OP_N, trans_b = CUBLAS_OP_N;
+	  int m = matC->shape[0], k = matA->shape[1], n = matC->shape[1];
+	  const float alpha = 1.0;
+	  const float beta = 0.0;
+	  if (transposeA) {
+	    trans_a = CUBLAS_OP_T;
+	    k = matA->shape[0];
+	  }
+	  if (transposeB) {
+	    trans_b = CUBLAS_OP_T;
+	  }
+	  cublasSgemm(handle, trans_b, trans_a,
+		      n, m, k, &alpha,
+		      (const float *)matB->data, transposeB ? k : n,
+		      (const float *)matA->data, transposeA ? m : k,
+		      &beta, (float *)matC->data, n);
+
   return 0;
 }
 __global__ void relu(float *input, float *output, int64_t size) {
