@@ -65,6 +65,7 @@ def sgd_update_gpu(param, grad_param, learning_rate):
     """Helper GPU SGD update method. Avoids copying NDArray to cpu."""
     assert isinstance(param, ndarray.NDArray)
     assert isinstance(grad_param, ndarray.NDArray)
+    print param, '!!'
     gpu_op.matrix_elementwise_multiply_by_const(
         grad_param, -learning_rate, grad_param)
     gpu_op.matrix_elementwise_add(param, grad_param, param)
